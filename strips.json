@@ -1,0 +1,16 @@
+[
+	{
+		"name": "Garfield",
+		"minDate": "1978-06-19",
+		"maxDate": "2020-07-22",
+		"urlFormat": "https://d1ejxu6vysztl5.cloudfront.net/comics/garfield/{0:yyyy}/{0:yyyy-MM-dd}.gif",
+		"fileName": "{0:yyyy-MM-dd}.gif"
+	},
+	{
+		"name": "U.S. Acres",
+		"minDate": "1986-03-03",
+		"maxDate": "1989-05-07",
+		"urlFormat": "https://d1ejxu6vysztl5.cloudfront.net/comics/usacres/{0:yyyy}/usa{0:yyyy-MM-dd}.gif",
+		"fileName": "usa{0:yyyy-MM-dd}.gif"
+	}
+]
