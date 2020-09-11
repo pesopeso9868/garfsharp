@@ -1,0 +1,15 @@
+name: Compile
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup CSC.exe
+        uses: yoavain/Setup-CSC@v5
+      - name: CSC
+        run: csc.exe -debug -reference:Newtonsoft.Json.dll -out:Garfield.exe -target:winexe garfield.cs
