@@ -12,5 +12,33 @@
 		"maxDate": "1989-05-07",
 		"urlFormat": "https://d1ejxu6vysztl5.cloudfront.net/comics/usacres/{0:yyyy}/usa{0:yyyy-MM-dd}.gif",
 		"fileName": "usa{0:yyyy-MM-dd}.gif"
+	},
+	{
+		"name": "(UComics) Garfield",
+		"minDate": "1978-06-19",
+		"maxDate": null,
+		"urlFormat": "http://images.ucomics.com/comics/ga/{0:yyyy}/ga{0:yyMMdd}.gif",
+		"fileName": "ga{0:yyMMdd}.gif"
+	},
+	{
+		"name": "(UComics) Calvin and Hobbes",
+		"minDate": "1985-11-18",
+		"maxDate": null,
+		"urlFormat": "http://images.ucomics.com/comics/ch/{0:yyyy}/ch{0:yyMMdd}.gif",
+		"fileName": "ch{0:yyMMdd}.gif"
+	},
+	{
+		"name": "(UComics) Peanuts",
+		"minDate": "1950-10-02",
+		"maxDate": null,
+		"urlFormat": "http://images.ucomics.com/comics/pe/{0:yyyy}/pe{0:yyMMdd}.gif",
+		"fileName": "pe{0:yyMMdd}.gif"
+	},
+	{
+		"name": "(UComics) Dilbert Classics",
+		"minDate": "2012-06-13",
+		"maxDate": null,
+		"urlFormat": "http://images.ucomics.com/comics/dc/{0:yyyy}/dc{0:yyMMdd}.gif",
+		"fileName": "dc{0:yyMMdd}.gif"
 	}
 ]

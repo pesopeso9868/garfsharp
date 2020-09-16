@@ -21,7 +21,7 @@ public class Garfield : Form{
 		public Comic(string name, string minDate, string maxDate, string urlFormat, string fileName){
 			this.name = name;
 			this.minDate = DateTime.Parse(minDate);
-			this.maxDate = DateTime.Parse(maxDate);
+			this.maxDate = DateTime.Parse(maxDate ?? DateTime.Now.ToString());
 			this.urlFormat = urlFormat;
 			this.fileName = fileName;
 		}
@@ -61,8 +61,29 @@ public class Garfield : Form{
 	};
 
 	public Garfield(){
-		string json = File.ReadAllText(@"strips.json");
-		comics = JsonConvert.DeserializeObject<List<Comic>>(json);
+		try{
+			string json = File.ReadAllText(@"strips.json");
+			comics = JsonConvert.DeserializeObject<List<Comic>>(json);
+		}
+		catch(Exception suck){
+			MessageBox.Show(String.Format("Your strips.json is wrong.\n\n{0}\n\n...but I'll let you pass this time.", suck.ToString()), "UH OH IO!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			comics = JsonConvert.DeserializeObject<List<Comic>>(@"[
+				{
+					'name': 'Garfield',
+					'minDate': '1978-06-19',
+					'maxDate': '2020-07-22',
+					'urlFormat': 'https://d1ejxu6vysztl5.cloudfront.net/comics/garfield/{0:yyyy}/{0:yyyy-MM-dd}.gif',
+					'fileName': '{0:yyyy-MM-dd}.gif'
+				},
+				{
+					'name': 'U.S. Acres',
+					'minDate': '1986-03-03',
+					'maxDate': '1989-05-07',
+					'urlFormat': 'https://d1ejxu6vysztl5.cloudfront.net/comics/usacres/{0:yyyy}/usa{0:yyyy-MM-dd}.gif',
+					'fileName': 'usa{0:yyyy-MM-dd}.gif'
+				}
+			]");
+		}
 		currentcomic = comics[0];
 		this.AutoSize = true;
 		this.MinimumSize = new Size(661,480);
