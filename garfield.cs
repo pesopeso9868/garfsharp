@@ -36,7 +36,6 @@ public class Garfield : Form
 		public DateTime maxDate { get; set; }
 		public string urlFormat { get; set; }
 		public string fileName { get; set; }
-		public bool local { get; set; }
 	}
 	public TableLayoutPanel panel;
 	public TableLayoutPanel picker;
