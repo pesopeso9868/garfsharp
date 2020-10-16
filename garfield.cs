@@ -36,6 +36,7 @@ public class Garfield : Form
 		public DateTime maxDate { get; set; }
 		public string urlFormat { get; set; }
 		public string fileName { get; set; }
+		public bool local { get; set; }
 	}
 	public TableLayoutPanel panel;
 	public TableLayoutPanel picker;
@@ -305,24 +306,53 @@ public class Garfield : Form
 	private async void strip_update(object sender, EventArgs e)
 	{
 		statusprogress.Visible = true;
-		HttpResponseMessage response = new HttpResponseMessage();
-		try
-		{
-			//Stream stream = stripretriever.OpenRead(String.Format(currentcomic.urlFormat, date.Value));
-			//ctk.Cancel();
-			response = await stripretriever.GetAsync(new Uri(String.Format(currentcomic.urlFormat, date.Value)), ctk.Token);
-			response.EnsureSuccessStatusCode();
-			Stream stream = await response.Content.ReadAsStreamAsync();
-			Image img = Image.FromStream(stream, false, false);
-			strip.Image = img;
+		Uri fuck;
+		bool good = Uri.TryCreate(String.Format(currentcomic.urlFormat, date.Value), UriKind.Absolute, out fuck);
+		if(good == false){
+			Uri.TryCreate(Path.GetFullPath(String.Format(currentcomic.urlFormat, date.Value)), UriKind.Absolute, out fuck);
 		}
-		catch (HttpRequestException suck)
-		{
-			strip.Image = drawMessage(((int)(response.StatusCode)).ToString());
+		//why in the world does absoluteuri return a string and not an uri
+		/*
+		had to break my balls for this one. 
+		none of the uri class methods don't even fucking support
+		relative paths.
+		*/
+		if(fuck.IsFile){
+			string path = fuck.LocalPath;
+			try{
+				FileStream fs = File.OpenRead(path);
+				Image img = Image.FromStream(fs, false, false);
+				strip.Image = img;
+			}
+			catch (FileNotFoundException suck)
+			{
+				strip.Image = drawMessage("not found");
+			}
+			catch(IOException suck)
+	        {
+				strip.Image = drawMessage("i/o exception.\nyour file must be locked.", 36);
+			}
 		}
-		catch(ArgumentException suck)
-        {
-			strip.Image = drawMessage("an error occured while\nprocessing the image", 36);
+		else{
+			HttpResponseMessage response = new HttpResponseMessage();
+			try
+			{
+				//Stream stream = stripretriever.OpenRead(String.Format(currentcomic.urlFormat, date.Value));
+				//ctk.Cancel();
+				response = await stripretriever.GetAsync(fuck, ctk.Token);
+				response.EnsureSuccessStatusCode();
+				Stream stream = await response.Content.ReadAsStreamAsync();
+				Image img = Image.FromStream(stream, false, false);
+				strip.Image = img;
+			}
+			catch (HttpRequestException suck)
+			{
+				strip.Image = drawMessage(((int)(response.StatusCode)).ToString());
+			}
+			catch(ArgumentException suck)
+	        {
+				strip.Image = drawMessage("an error occured while\nprocessing the image", 36);
+			}
 		}
 		statusprogress.Visible = false;
 		statusdate.Text = date.Value.ToString("d");
