@@ -9,11 +9,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
-      #- uses: yoavain/Setup-CSC@v5 YOU BROKE IT
-      - name: temp list files 
-        run: dir
-      #- name: csc
-      #  run: csc.exe -debug:full -r:Newtonsoft.Json.dll -r:System.Net.Http.dll -out:Garfield.exe -target:winexe garfield.cs
+      - name: compile using csc
+        run: csc\csc.exe -debug:full -r:Newtonsoft.Json.dll -r:System.Net.Http.dll -out:Garfield.exe -target:winexe garfield.cs
       - name: artifect
         uses: actions/upload-artifact@v2.1.4
         with:
