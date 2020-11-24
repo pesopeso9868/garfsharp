@@ -7,6 +7,7 @@ using System.Windows;
 using System.Net;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -14,7 +15,7 @@ public class Garfield : Form
 {
 	public class Comic
 	{
-		public Comic(string name, DateTime minDate, DateTime maxDate, string urlFormat, string fileName)
+		public Comic(string name, DateTime minDate, DateTime maxDate, string urlFormat, string fileName, int dayIncrement)
 		{
 			this.name = name;
 			this.minDate = minDate;
@@ -23,20 +24,29 @@ public class Garfield : Form
 			this.fileName = fileName;
 		}
 		[JsonConstructor]
-		public Comic(string name, string minDate, string maxDate, string urlFormat, string fileName)
+		public Comic(string name, string minDate, string maxDate, string urlFormat, string fileName, int dayIncrement, int? weekday)
 		{
 			this.name = name;
 			this.minDate = DateTime.Parse(minDate);
 			this.maxDate = DateTime.Parse(maxDate ?? DateTime.Now.ToString());
 			this.urlFormat = urlFormat;
 			this.fileName = fileName;
+			this.dayIncrement = dayIncrement;
+			this.weekday = weekday;
 		}
 		public string name { get; set; }
 		public DateTime minDate { get; set; }
 		public DateTime maxDate { get; set; }
 		public string urlFormat { get; set; }
 		public string fileName { get; set; }
-		public bool local { get; set; }
+
+		[DefaultValue(1)]
+		[JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
+		public int dayIncrement { get; set; }
+
+		[DefaultValue(null)]
+		[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+		public int? weekday { get; set; }
 	}
 	public TableLayoutPanel panel;
 	public TableLayoutPanel picker;
@@ -224,13 +234,14 @@ public class Garfield : Form
 			comic
 		});
 		this.Controls.Add(menu);
+		strip_rando(null, null);
 		strip_update(null, null);
 	}
 	private void strip_previous(object sender, EventArgs e)
 	{
 		try
 		{
-			date.Value = date.Value.AddDays(-1);
+			date.Value = date.Value.AddDays(-currentcomic.dayIncrement);
 		}
 		catch (ArgumentOutOfRangeException suck)
 		{
@@ -241,7 +252,7 @@ public class Garfield : Form
 	{
 		try
 		{
-			date.Value = date.Value.AddDays(1);
+			date.Value = date.Value.AddDays(currentcomic.dayIncrement);
 		}
 		catch (ArgumentOutOfRangeException suck)
 		{
@@ -258,7 +269,13 @@ public class Garfield : Form
 		try
 		{
 			int r = (currentcomic.maxDate - currentcomic.minDate).Days;
-			date.Value = currentcomic.minDate.AddDays(new Random().Next(r));
+			DateTime rd = currentcomic.minDate.AddDays(new Random().Next(r));
+			if(currentcomic.weekday is int butt){
+				date.Value = rd.AddDays(7-((int)rd.DayOfWeek-butt%7));
+			}
+			else{
+				date.Value = rd;
+			}
 		}
 		catch (ArgumentOutOfRangeException suck)
 		{
@@ -320,7 +337,7 @@ public class Garfield : Form
 		if(fuck.IsFile){
 			string path = fuck.LocalPath;
 			try{
-				FileStream fs = File.OpenRead(path);
+				FileStream fs = await Task.Run(() => File.OpenRead(path));//File.OpenRead(path); its asynchronous now lol
 				Image img = Image.FromStream(fs, false, false);
 				strip.Image = img;
 			}
@@ -350,7 +367,7 @@ public class Garfield : Form
 				strip.Image = drawMessage(((int)(response.StatusCode)).ToString());
 			}
 			catch(ArgumentException suck)
-	        {
+			{
 				strip.Image = drawMessage("an error occured while\nprocessing the image", 36);
 			}
 		}
@@ -363,8 +380,12 @@ public class Garfield : Form
 		currentcomic = comic;
 		date.ResetBindings();
 		date.Checked = true;
-		date.MinDate = currentcomic.minDate;
+		//i keep getting argumentoutofrangeexceptions. lets try this
+		date.MaxDate = DateTimePicker.MaximumDateTime;
+		date.MinDate = DateTimePicker.MinimumDateTime;
+		//reset mindate and maxdate values then set it again
 		date.MaxDate = currentcomic.maxDate;
+		date.MinDate = currentcomic.minDate;
 		date.Value = date.Value;
 		statuscomic.Text = currentcomic.name;
 		strip_update(null, null);
