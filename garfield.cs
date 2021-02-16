@@ -130,6 +130,7 @@ public class Garfield : Form
 		this.MinimumSize = new Size(661, 480);
 		this.Text = @"Garfield strip picker - " + taglines[new Random().Next(0, taglines.Length)];
 		stripretriever = new HttpClient();
+		System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12 | SecurityProtocolType.Tls13;
 		stripretriever.DefaultRequestHeaders.UserAgent.TryParseAdd("Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; .NET CLR 1.0.3705;)");
 		// fuck you msdn you lied to me
 		/*stripretriever.DownloadProgressChanged += new DownloadProgressChangedEventHandler(delegate (object sender, DownloadProgressChangedEventArgs e) {
@@ -364,6 +365,7 @@ public class Garfield : Form
 			}
 			catch (HttpRequestException suck)
 			{
+				//MessageBox.Show(suck.ToString());
 				strip.Image = drawMessage(((int)(response.StatusCode)).ToString());
 			}
 			catch(ArgumentException suck)
