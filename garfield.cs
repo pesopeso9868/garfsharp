@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Reflection;
 public class Garfield : Form
 {
 	public class Comic
@@ -48,6 +49,26 @@ public class Garfield : Form
 		[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
 		public int? weekday { get; set; }
 	}
+	public class Gimmicks
+	{
+		public Gimmicks()
+		{
+			this.twopanel = false;
+			this.pipe = false;
+		}
+		public bool AtLeastOne(){
+			PropertyInfo[] piss = this.GetType().GetProperties();
+			foreach(PropertyInfo prop in piss){
+				bool val = (bool)prop.GetValue(this);
+				if(val){
+					return true;
+				}
+			}
+			return false;
+		}
+		public bool twopanel { get; set; }
+		public bool pipe { get; set; }
+	}
 	public TableLayoutPanel panel;
 	public TableLayoutPanel picker;
 	public Button previous;
@@ -63,6 +84,7 @@ public class Garfield : Form
 	public MenuStrip menu;
 	public List<Comic> comics;
 	public Comic currentcomic;
+	public Gimmicks gimmicks;
 	public string[] taglines = new string[] {
 		"now with 15% more C#!",
 		"just like the web verison, but standalone!",
@@ -78,8 +100,18 @@ public class Garfield : Form
 		"featuring shitty code!"
 	};
 	private CancellationTokenSource ctk = new CancellationTokenSource();
+	public Bitmap shittyCopy(Image bitmap){
+		Bitmap bm = new Bitmap(bitmap.Width, bitmap.Height);
+		using(Graphics g = Graphics.FromImage(bm)){
+			g.DrawImage(bitmap, 0, 0, new RectangleF(new Point(0, 0), new Size(bitmap.Width, bitmap.Height)), GraphicsUnit.Pixel);
+		};
+		return bm;
+	}
 	ToolStripMenuItem file;
 	ToolStripMenuItem comic;
+	ToolStripMenuItem gimmick;
+	ToolStripMenuItem twopanel;
+	ToolStripMenuItem pipe;
 	ToolStripMenuItem change;
 	ToolStripMenuItem save;
 	ToolStripMenuItem copy;
@@ -117,6 +149,11 @@ public class Garfield : Form
 		}
 		file = new ToolStripMenuItem("&File");
 		comic = new ToolStripMenuItem("&Comic");
+		gimmick = new ToolStripMenuItem("&Gimmicks");
+		twopanel = new ToolStripMenuItem("&Two panels", null, new EventHandler(strip_gimmick));
+		twopanel.Tag = 0;
+		pipe = new ToolStripMenuItem("&Pipe", null, new EventHandler(strip_gimmick));
+		pipe.Tag = 1;
 		change = new ToolStripMenuItem("&Change comic");
 		save = new ToolStripMenuItem("&Save strip", null, new EventHandler(strip_save), (Keys.Control | Keys.S));
 		copy = new ToolStripMenuItem("&Copy strip image to clipboard", null, new EventHandler(strip_copy), (Keys.Control | Keys.C));
@@ -224,15 +261,26 @@ public class Garfield : Form
 				gorando
 			});
 		});
+		gimmicks = new Gimmicks();
+		gimmick.DropDownOpening += new EventHandler(delegate (object sender, EventArgs e) {
+			gimmick.DropDownItems.Clear();
+			gimmick.DropDownItems.AddRange(new ToolStripMenuItem[]{
+				twopanel,
+				pipe
+			});
+		});
 		for (int i = 0; i < comics.Count; i++)
 		{
 			// im so fucked up
 			Comic item = comics[i];
-			change.DropDownItems.Add(new ToolStripMenuItem(item.name, null, new EventHandler((sender, e) => comic_update(sender, e, item))));
+			ToolStripMenuItem fuck = new ToolStripMenuItem(item.name, null, new EventHandler((sender, e) => comic_update(sender, e)));
+			fuck.Tag = item;
+			change.DropDownItems.Add(fuck);
 		}
 		menu.Items.AddRange(new ToolStripItem[]{
 			file,
-			comic
+			comic,
+			gimmick
 		});
 		this.Controls.Add(menu);
 		strip_rando(null, null);
@@ -335,20 +383,20 @@ public class Garfield : Form
 		none of the uri class methods don't even fucking support
 		relative paths.
 		*/
+		Image img;
 		if(fuck.IsFile){
 			string path = fuck.LocalPath;
 			try{
 				FileStream fs = await Task.Run(() => File.OpenRead(path));//File.OpenRead(path); its asynchronous now lol
-				Image img = Image.FromStream(fs, false, false);
-				strip.Image = img;
+				img = Image.FromStream(fs, false, false);
 			}
 			catch (FileNotFoundException suck)
 			{
-				strip.Image = drawMessage("not found");
+				img = drawMessage("not found");
 			}
 			catch(IOException suck)
 	        {
-				strip.Image = drawMessage("i/o exception.\nyour file must be locked.", 36);
+				img = drawMessage("i/o exception.\nyour file must be locked.", 36);
 			}
 		}
 		else{
@@ -360,26 +408,56 @@ public class Garfield : Form
 				response = await stripretriever.GetAsync(fuck, ctk.Token);
 				response.EnsureSuccessStatusCode();
 				Stream stream = await response.Content.ReadAsStreamAsync();
-				Image img = Image.FromStream(stream, false, false);
-				strip.Image = img;
+				img = Image.FromStream(stream, false, false);
 			}
 			catch (HttpRequestException suck)
 			{
 				//MessageBox.Show(suck.ToString());
-				strip.Image = drawMessage(((int)(response.StatusCode)).ToString());
+				img = drawMessage(((int)(response.StatusCode)).ToString());
 			}
 			catch(ArgumentException suck)
 			{
-				strip.Image = drawMessage("an error occured while\nprocessing the image", 36);
+				img = drawMessage("an error occured while\nprocessing the image", 36);
 			}
 		}
+		Bitmap bm = new Bitmap(img.Width, img.Height);
+		using(bm){
+			bm = this.shittyCopy(img);
+			if(gimmicks.twopanel){
+				int width = (int)(img.Width/1.5);
+				bm = new Bitmap(width, img.Height);
+				using(Graphics g = Graphics.FromImage(bm)){
+					g.DrawImage(img, 0, 0, new RectangleF(new Point(0, 0), new Size(width,img.Height)), GraphicsUnit.Pixel);
+				};
+			}
+			if(gimmicks.pipe){
+				string path = "./resource/pipe.png"; //I don't want to pack it as a resource so its in a folder
+				if(File.Exists(path)){
+					using(Bitmap pipeunscale = new Bitmap(path)){
+						int width = img.Width>=1195&&img.Width<=1205?pipeunscale.Width:(int)(img.Width/3);
+						Bitmap pipebm = new Bitmap(pipeunscale, new Size(width, img.Height));
+						using(Graphics g = Graphics.FromImage(bm)){
+							g.DrawImage(bm, 0, 0, new RectangleF(new Point(0, 0), new Size(bm.Width,bm.Height)), GraphicsUnit.Pixel);
+							g.DrawImage(pipebm, bm.Width-pipebm.Width, 0, new RectangleF(new Point(0, 0), new Size(pipebm.Width,pipebm.Height)), GraphicsUnit.Pixel);
+						};
+						pipebm.Dispose();
+					}
+				}
+			}
+			if(gimmicks.AtLeastOne()){
+				img = bm;
+			}
+		}
+		strip.Image = img;
 		statusprogress.Visible = false;
 		statusdate.Text = date.Value.ToString("d");
 	}
 
-	private void comic_update(object sender, EventArgs e, Comic comic)
+	private void comic_update(object sender, EventArgs e)
 	{
-		currentcomic = comic;
+		ToolStripMenuItem _where = sender as ToolStripMenuItem;
+		if(_where == null) return;
+		currentcomic = _where.Tag as Comic;
 		date.ResetBindings();
 		date.Checked = true;
 		//i keep getting argumentoutofrangeexceptions. lets try this
@@ -390,6 +468,24 @@ public class Garfield : Form
 		date.MinDate = currentcomic.minDate;
 		date.Value = date.Value;
 		statuscomic.Text = currentcomic.name;
+		strip_update(null, null);
+	}
+
+	private void strip_gimmick(object sender, EventArgs e){
+		//i had a slightly better idea of doing this but csc hated it
+		ToolStripMenuItem gimmickItem = sender as ToolStripMenuItem;
+		if(gimmickItem==null) return; //wanted to add checks for tags too but i cant figure that out
+		gimmickItem.Checked = !gimmickItem.Checked;
+		switch((int)gimmickItem.Tag){
+			case 0:
+				gimmicks.twopanel = gimmickItem.Checked;
+				break;
+			case 1:
+				gimmicks.pipe = gimmickItem.Checked;
+				break;
+			default:
+				return;
+		}
 		strip_update(null, null);
 	}
 
