@@ -15,4 +15,6 @@ jobs:
         uses: actions/upload-artifact@v2.1.4
         with:
           name: Garfield
-          path: Garfield.exe
+          path: |
+            Garfield.exe
+            Garfield.pdb
