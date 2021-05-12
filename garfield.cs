@@ -49,25 +49,116 @@ public class Garfield : Form
 		[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
 		public int? weekday { get; set; }
 	}
+	public class Gimmick
+	{
+		public Gimmick(string name){
+			this.name = name;
+			this.contentlabel = "&" + name;
+			this.enabled = false;
+		}
+		public Gimmick(string name, string label){
+			this.name = name;
+			this.contentlabel = label;
+			this.enabled = false;
+		}
+		public string name { get; set; }
+		public string contentlabel { get; set; }
+		public bool enabled { get; set; }
+		public Func<Bitmap, Image, Bitmap> doIt { get; set; }
+	}
 	public class Gimmicks
 	{
 		public Gimmicks()
 		{
-			this.twopanel = false;
-			this.pipe = false;
+			this.twopanel = new Gimmick("Two panels");
+			this.pipe = new Gimmick("Pipe");
+			this.deflated = new Gimmick("Deflated");
+			this.window = new Gimmick("Window");
+			this.twopanel.doIt = delegate(Bitmap bm, Image img){
+				int width = (int)(img.Width/1.5);
+				bm = new Bitmap(width, img.Height);
+				using(Graphics g = Graphics.FromImage(bm)){
+					g.DrawImage(img, 0, 0, new RectangleF(new Point(0, 0), new Size(width,img.Height)), GraphicsUnit.Pixel);
+				};
+				return bm;
+			}; // Need a better way to do this.... it's just the same function but with different paths
+			this.pipe.doIt = delegate(Bitmap bm, Image img){
+				string path = "./resource/pipe.png"; //I don't want to pack it as a resource so its in a folder
+				if(File.Exists(path)){
+					using(Bitmap pipeunscale = new Bitmap(path)){
+						int width = img.Width>=1195&&img.Width<=1205?pipeunscale.Width:(int)(img.Width/3);
+						Bitmap pipebm = new Bitmap(pipeunscale, new Size(width, img.Height));
+						using(Graphics g = Graphics.FromImage(bm)){
+							g.DrawImage(bm, 0, 0, new RectangleF(new Point(0, 0), new Size(bm.Width,bm.Height)), GraphicsUnit.Pixel);
+							g.DrawImage(pipebm, bm.Width-pipebm.Width, 0, new RectangleF(new Point(0, 0), new Size(pipebm.Width,pipebm.Height)), GraphicsUnit.Pixel);
+						};
+						pipebm.Dispose();
+					}
+				}
+				return bm;
+			};
+			this.deflated.doIt = delegate(Bitmap bm, Image img){
+				string path = "./resource/deflated.png"; //I don't want to pack it as a resource so its in a folder
+				if(File.Exists(path)){
+					using(Bitmap pipeunscale = new Bitmap(path)){
+						int width = img.Width>=1195&&img.Width<=1205?pipeunscale.Width:(int)(img.Width/3);
+						Bitmap pipebm = new Bitmap(pipeunscale, new Size(width, img.Height));
+						using(Graphics g = Graphics.FromImage(bm)){
+							g.DrawImage(bm, 0, 0, new RectangleF(new Point(0, 0), new Size(bm.Width,bm.Height)), GraphicsUnit.Pixel);
+							g.DrawImage(pipebm, bm.Width-pipebm.Width, 0, new RectangleF(new Point(0, 0), new Size(pipebm.Width,pipebm.Height)), GraphicsUnit.Pixel);
+						};
+						pipebm.Dispose();
+					}
+				}
+				return bm;
+			};
+			this.window.doIt = delegate(Bitmap bm, Image img){
+				string path = "./resource/window.png"; //I don't want to pack it as a resource so its in a folder
+				if(File.Exists(path)){
+					using(Bitmap pipeunscale = new Bitmap(path)){
+						int width = img.Width>=1195&&img.Width<=1205?407:(int)(img.Width/3);
+						Bitmap pipebm = new Bitmap(pipeunscale, new Size(width, img.Height));
+						using(Graphics g = Graphics.FromImage(bm)){
+							g.DrawImage(bm, 0, 0, new RectangleF(new Point(0, 0), new Size(bm.Width,bm.Height)), GraphicsUnit.Pixel);
+							g.DrawImage(pipebm, bm.Width-pipebm.Width, 0, new RectangleF(new Point(0, 0), new Size(pipebm.Width,pipebm.Height)), GraphicsUnit.Pixel);
+						};
+						pipebm.Dispose();
+					}
+				}
+				return bm;
+			};
 		}
-		public bool AtLeastOne(){
+		public List<Gimmick> ListGimmicks(){
+			List<Gimmick> list = new List<Gimmick>();
 			PropertyInfo[] piss = this.GetType().GetProperties();
 			foreach(PropertyInfo prop in piss){
-				bool val = (bool)prop.GetValue(this);
-				if(val){
+				Gimmick val = (Gimmick)prop.GetValue(this);
+				if(val != null){
+					list.Add(val);
+				}
+			}
+			return list;
+		}
+		public bool AtLeastOne(){
+			// PropertyInfo[] piss = this.GetType().GetProperties();
+			// foreach(PropertyInfo prop in piss){
+			// 	Gimmick val = (Gimmick)prop.GetValue(this);
+			// 	if(val && val.enabled){
+			// 		return true;
+			// 	}
+			// }
+			// return false;
+			foreach(Gimmick gimmick in this.ListGimmicks()){
+				if(gimmick.enabled){
 					return true;
 				}
 			}
 			return false;
 		}
-		public bool twopanel { get; set; }
-		public bool pipe { get; set; }
+		public Gimmick twopanel { get; set; }
+		public Gimmick pipe { get; set; }
+		public Gimmick deflated { get; set; }
+		public Gimmick window { get; set; }
 	}
 	public TableLayoutPanel panel;
 	public TableLayoutPanel picker;
@@ -97,7 +188,9 @@ public class Garfield : Form
 		"watch Wade Duck tear a tag off of a pillow!",
 		"because I can!",
 		"now with 75% more CSC!",
-		"featuring shitty code!"
+		"featuring shitty code!",
+		"now with Funny Ideas to spice up the comic!",
+		"now with more classes and lambda expressions!"
 	};
 	private CancellationTokenSource ctk = new CancellationTokenSource();
 	public Bitmap shittyCopy(Image bitmap){
@@ -110,8 +203,14 @@ public class Garfield : Form
 	ToolStripMenuItem file;
 	ToolStripMenuItem comic;
 	ToolStripMenuItem gimmick;
-	ToolStripMenuItem twopanel;
-	ToolStripMenuItem pipe;
+
+	// ToolStripMenuItem twopanel;
+	// ToolStripMenuItem pipe;
+	// ToolStripMenuItem deflated;
+	// ToolStripMenuItem window;
+
+	List<ToolStripMenuItem> gimmickMenus = new List<ToolStripMenuItem>();
+
 	ToolStripMenuItem change;
 	ToolStripMenuItem save;
 	ToolStripMenuItem copy;
@@ -150,10 +249,20 @@ public class Garfield : Form
 		file = new ToolStripMenuItem("&File");
 		comic = new ToolStripMenuItem("&Comic");
 		gimmick = new ToolStripMenuItem("&Gimmicks");
-		twopanel = new ToolStripMenuItem("&Two panels", null, new EventHandler(strip_gimmick));
-		twopanel.Tag = 0;
-		pipe = new ToolStripMenuItem("&Pipe", null, new EventHandler(strip_gimmick));
-		pipe.Tag = 1;
+
+		gimmicks = new Gimmicks();
+
+		foreach(Gimmick gimmick in gimmicks.ListGimmicks()){
+
+			ToolStripMenuItem temp = new ToolStripMenuItem(gimmick.contentlabel, null);
+			temp.Click += (sender, e) => strip_gimmick(sender, e, gimmick);// Not using the EventHandler in constructor this time lol
+			gimmickMenus.Add(temp);
+		}
+
+		// twopanel = new ToolStripMenuItem("&Two panels", null, new EventHandler(strip_gimmick));
+		// twopanel.Tag = 0;
+		// pipe = new ToolStripMenuItem("&Pipe", null, new EventHandler(strip_gimmick));
+		// pipe.Tag = 1;
 		change = new ToolStripMenuItem("&Change comic");
 		save = new ToolStripMenuItem("&Save strip", null, new EventHandler(strip_save), (Keys.Control | Keys.S));
 		copy = new ToolStripMenuItem("&Copy strip image to clipboard", null, new EventHandler(strip_copy), (Keys.Control | Keys.C));
@@ -261,13 +370,13 @@ public class Garfield : Form
 				gorando
 			});
 		});
-		gimmicks = new Gimmicks();
 		gimmick.DropDownOpening += new EventHandler(delegate (object sender, EventArgs e) {
 			gimmick.DropDownItems.Clear();
-			gimmick.DropDownItems.AddRange(new ToolStripMenuItem[]{
-				twopanel,
-				pipe
-			});
+			gimmick.DropDownItems.AddRange(gimmickMenus.ToArray()); 
+			// new ToolStripMenuItem[]{
+			// 	twopanel,
+			// 	pipe
+			// }
 		});
 		for (int i = 0; i < comics.Count; i++)
 		{
@@ -423,30 +532,36 @@ public class Garfield : Form
 		Bitmap bm = new Bitmap(img.Width, img.Height);
 		using(bm){
 			bm = this.shittyCopy(img);
-			if(gimmicks.twopanel){
-				int width = (int)(img.Width/1.5);
-				bm = new Bitmap(width, img.Height);
-				using(Graphics g = Graphics.FromImage(bm)){
-					g.DrawImage(img, 0, 0, new RectangleF(new Point(0, 0), new Size(width,img.Height)), GraphicsUnit.Pixel);
-				};
-			}
-			if(gimmicks.pipe){
-				string path = "./resource/pipe.png"; //I don't want to pack it as a resource so its in a folder
-				if(File.Exists(path)){
-					using(Bitmap pipeunscale = new Bitmap(path)){
-						int width = img.Width>=1195&&img.Width<=1205?pipeunscale.Width:(int)(img.Width/3);
-						Bitmap pipebm = new Bitmap(pipeunscale, new Size(width, img.Height));
-						using(Graphics g = Graphics.FromImage(bm)){
-							g.DrawImage(bm, 0, 0, new RectangleF(new Point(0, 0), new Size(bm.Width,bm.Height)), GraphicsUnit.Pixel);
-							g.DrawImage(pipebm, bm.Width-pipebm.Width, 0, new RectangleF(new Point(0, 0), new Size(pipebm.Width,pipebm.Height)), GraphicsUnit.Pixel);
-						};
-						pipebm.Dispose();
-					}
+			foreach(Gimmick gimmick in gimmicks.ListGimmicks()){
+				if(gimmick.enabled){
+					img = gimmick.doIt(bm, img);
+					// THis is prone to exceptions and im not doing anything abouti t
 				}
 			}
-			if(gimmicks.AtLeastOne()){
-				img = bm;
-			}
+			// if(gimmicks.twopanel){
+			// 	int width = (int)(img.Width/1.5);
+			// 	bm = new Bitmap(width, img.Height);
+			// 	using(Graphics g = Graphics.FromImage(bm)){
+			// 		g.DrawImage(img, 0, 0, new RectangleF(new Point(0, 0), new Size(width,img.Height)), GraphicsUnit.Pixel);
+			// 	};
+			// }
+			// if(gimmicks.pipe){
+			// 	string path = "./resource/pipe.png"; //I don't want to pack it as a resource so its in a folder
+			// 	if(File.Exists(path)){
+			// 		using(Bitmap pipeunscale = new Bitmap(path)){
+			// 			int width = img.Width>=1195&&img.Width<=1205?pipeunscale.Width:(int)(img.Width/3);
+			// 			Bitmap pipebm = new Bitmap(pipeunscale, new Size(width, img.Height));
+			// 			using(Graphics g = Graphics.FromImage(bm)){
+			// 				g.DrawImage(bm, 0, 0, new RectangleF(new Point(0, 0), new Size(bm.Width,bm.Height)), GraphicsUnit.Pixel);
+			// 				g.DrawImage(pipebm, bm.Width-pipebm.Width, 0, new RectangleF(new Point(0, 0), new Size(pipebm.Width,pipebm.Height)), GraphicsUnit.Pixel);
+			// 			};
+			// 			pipebm.Dispose();
+			// 		}
+			// 	}
+			// }
+			// if(gimmicks.AtLeastOne()){
+			// 	img = bm;
+			// }
 		}
 		strip.Image = img;
 		statusprogress.Visible = false;
@@ -471,21 +586,12 @@ public class Garfield : Form
 		strip_update(null, null);
 	}
 
-	private void strip_gimmick(object sender, EventArgs e){
+	private void strip_gimmick(object sender, EventArgs e, Gimmick gimmick){
 		//i had a slightly better idea of doing this but csc hated it
 		ToolStripMenuItem gimmickItem = sender as ToolStripMenuItem;
 		if(gimmickItem==null) return; //wanted to add checks for tags too but i cant figure that out
 		gimmickItem.Checked = !gimmickItem.Checked;
-		switch((int)gimmickItem.Tag){
-			case 0:
-				gimmicks.twopanel = gimmickItem.Checked;
-				break;
-			case 1:
-				gimmicks.pipe = gimmickItem.Checked;
-				break;
-			default:
-				return;
-		}
+		gimmick.enabled = gimmickItem.Checked;
 		strip_update(null, null);
 	}
 
