@@ -50,11 +50,21 @@
 		"fileName": "ga{0:yyMMdd}.gif"
 	},
 	{
+		"name": "(GoComics) Garfield",
+		"minDate": "1978-06-19",
+		"maxDate": null,
+		"urlFormat": "https://www.gocomics.com/garfield/{0:yyyy}/{0:MM}/{0:dd}",
+		"isHtml": true,
+		"fileName": "ga{0:yyMMdd}.gif",
+		"realUrlRegex": "item-comic-image.*data-srcset=\"(.*?) (.*?)(,|\")",
+		"realMatchGroup": 1
+	},
+	{
 		"name": "(UComics) Calvin and Hobbes",
 		"minDate": "1985-11-18",
 		"maxDate": null,
 		"urlFormat": "http://images.ucomics.com/comics/ch/{0:yyyy}/ch{0:yyMMdd}.gif",
-		"fileName": "ch{0:yyMMdd}.gif"
+		"fileName": "ch{0:yyMMdd}.gif",
 	},
 	{
 		"name": "(UComics) Peanuts",
