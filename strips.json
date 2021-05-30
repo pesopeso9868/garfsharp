@@ -1,93 +1,140 @@
 [
+	// This is a Comic. It contains information on the name, number of panels, file name and sources.
 	{
-		"name": "(the-eye) Garfield",
+		"name": "Garfield",
+		"numPanels": 3,
 		"minDate": "1978-06-19",
-		"maxDate": "2020-07-22",
-		"urlFormat": "https://the-eye.eu/public/Comics/Garfield/{0:yyyy-MM-dd}.gif",
-		//"urlFormat": "https://d1ejxu6vysztl5.cloudfront.net/comics/garfield/{0:yyyy}/.gif",
-		//i hate you, nick
 		"fileName": "{0:yyyy-MM-dd}.gif",
-		"numPanels": 3
+		"sources": [
+			// These are ComicSources. It contains information of the name of the source, the URL format, whether or not it's an HTML and regex for the data.
+			// maxDate and minDate will override the top-layer date settings
+			{
+				"name": "the-eye",
+				"urlFormat": "https://the-eye.eu/public/Comics/Garfield/{0:yyyy-MM-dd}.gif",
+				"maxDate": "2020-07-21"
+			},
+			{
+				"name": "GoComics",
+				"urlFormat": "https://www.gocomics.com/garfield/{0:yyyy}/{0:MM}/{0:dd}",
+				"isHtml": true,
+				// This is a RegexInfo. It simply contains the expression and group to tell the program how to pull the comic image URL from the HTML data.
+				"regex": {
+					"expression": "item-comic-image.*data-srcset=\"(.*?) (.*?)(,|\")",
+					"group": 1
+				}
+			},
+			{
+				"name": "Uclick",
+				"minDate": "1978-06-19",
+				"urlFormat": "http://images.ucomics.com/comics/ga/{0:yyyy}/ga{0:yyMMdd}.gif"
+			},
+			{
+				"name": "archive.org",
+				"urlFormat": "https://web.archive.org/web/2019id_/https://d1ejxu6vysztl5.cloudfront.net/comics/garfield/{0:yyyy}/{0:yyyy-MM-dd}.gif",
+				"maxDate": "2020-07-21"
+			}
+			
+		]
 	},
 	{
-		"name": "(archive.org) U.S. Acres",
+		"name": "U.S. Acres",
+		"numPanels": 3,
 		"minDate": "1986-03-03",
 		"maxDate": "1989-05-07",
-		"urlFormat": "https://web.archive.org/web/2019id_/https://d1ejxu6vysztl5.cloudfront.net/comics/usacres/{0:yyyy}/usa{0:yyyy-MM-dd}.gif",
-		//"urlFormat": "https://d1ejxu6vysztl5.cloudfront.net/comics/usacres/{0:yyyy}/usa{0:yyyy-MM-dd}.gif",
 		"fileName": "usa{0:yyyy-MM-dd}.gif",
-		"numPanels": 3
+		"sources": [	
+			{
+				"name": "archive.org",
+				"urlFormat": "https://web.archive.org/web/2019id_/https://d1ejxu6vysztl5.cloudfront.net/comics/usacres/{0:yyyy}/usa{0:yyyy-MM-dd}.gif"
+			},
+			{
+				"name": "Local copy",
+				"urlFormat": "usacres\\usa{0:yyyy-MM-dd}.gif"
+			}	
+		]
 	},
 	{
-		"name": "(archive.org) Garfield",
-		"minDate": "1978-06-19",
-		"maxDate": "2020-07-22",
-		"urlFormat": "https://web.archive.org/web/2019id_/https://d1ejxu6vysztl5.cloudfront.net/comics/garfield/{0:yyyy}/{0:yyyy-MM-dd}.gif",
-		//"urlFormat": "https://d1ejxu6vysztl5.cloudfront.net/comics/usacres/{0:yyyy}/usa{0:yyyy-MM-dd}.gif",
-		"fileName": "usa{0:yyyy-MM-dd}.gif",
-		"numPanels": 3
-	},
-	{
-		"name": "(local) U.S. Acres",
-		"minDate": "1986-03-03",
-		"maxDate": "1989-05-07",
-		"urlFormat": "usacres\\usa{0:yyyy-MM-dd}.gif",
-		//"urlFormat": "https://d1ejxu6vysztl5.cloudfront.net/comics/usacres/{0:yyyy}/usa{0:yyyy-MM-dd}.gif",
-		"fileName": "usa{0:yyyy-MM-dd}.gif",
-		"numPanels": 3
-	},
-	{
-		"name": "(local) Gnorm Gnat",
+		"name": "Gnorm Gnat",
+		"numPanels": 3,
 		"minDate": "1973-03-01",
 		"maxDate": "1975-12-25",
-		"urlFormat": "gnormgnat\\{0:yyyy-MM-dd}.png",
-		//"urlFormat": "https://d1ejxu6vysztl5.cloudfront.net/comics/usacres/{0:yyyy}/usa{0:yyyy-MM-dd}.gif",
 		"fileName": "{0:yyyy-MM-dd}.png",
-		"dayIncrement": 7,
-		"weekday": 4,
-		"numPanels": 3
-	},
+		//This is a WeekInfo. This is mostly used for comics in which a strip is published every Thursday, like Gnorm Gnat.
+		"weekinfo": {
+			"increment": 7,
+			"dayofweek": 4
+		},
+		"sources": [
+			{
+				"name": "Local copy",
+				"urlFormat": "gnormgnat\\{0:yyyy-MM-dd}.png"
+			}
+		]
+	},	
 	{
-		"name": "(UComics) Garfield",
-		"minDate": "1978-06-19",
-		"maxDate": null,
-		"urlFormat": "http://images.ucomics.com/comics/ga/{0:yyyy}/ga{0:yyMMdd}.gif",
-		"fileName": "ga{0:yyMMdd}.gif",
-		"numPanels": 3
-	},
-	{
-		"name": "(GoComics) Garfield",
-		"minDate": "1978-06-19",
-		"maxDate": null,
-		"urlFormat": "https://www.gocomics.com/garfield/{0:yyyy}/{0:MM}/{0:dd}",
-		"isHtml": true,
-		"fileName": "ga{0:yyMMdd}.gif",
-		"realUrlRegex": "item-comic-image.*data-srcset=\"(.*?) (.*?)(,|\")",
-		"realMatchGroup": 1,
-		"numPanels": 3
-	},
-	{
-		"name": "(UComics) Calvin and Hobbes",
+		"name": "Calvin and Hobbes",
 		"minDate": "1985-11-18",
-		"maxDate": null,
-		"urlFormat": "http://images.ucomics.com/comics/ch/{0:yyyy}/ch{0:yyMMdd}.gif",
+		"maxDate": "1995-12-31",
+		"numPanels": 4,
 		"fileName": "ch{0:yyMMdd}.gif",
-		"numPanels": 4
+		"sources": [
+			
+			{
+				"name": "GoComics",
+				"urlFormat": "https://www.gocomics.com/calvinandhobbes/{0:yyyy}/{0:MM}/{0:dd}",
+				"isHtml": true,
+				"regex": {
+					"expression": "item-comic-image.*data-srcset=\"(.*?) (.*?)(,|\")",
+					"group": 1
+				}
+
+			},
+			{
+				"name": "UClick",
+				"urlFormat": "http://images.ucomics.com/comics/ch/{0:yyyy}/ch{0:yyMMdd}.gif"
+			}
+		]
 	},
 	{
-		"name": "(UComics) Peanuts",
+		"name": "Peanuts",
 		"minDate": "1950-10-02",
-		"maxDate": null,
-		"urlFormat": "http://images.ucomics.com/comics/pe/{0:yyyy}/pe{0:yyMMdd}.gif",
+		// quick google search tells me feb 13 2000 is the last strip... but its still running on gocomics? should i make maxdate null?
+		"maxDate": "2000-02-13",
+		"numPanels": 4,
 		"fileName": "pe{0:yyMMdd}.gif",
-		"numPanels": 4
+		"sources": [
+			{
+				"name": "GoComics",
+				"urlFormat": "https://www.gocomics.com/peanuts/{0:yyyy}/{0:MM}/{0:dd}",
+				"isHtml": true,
+				"regex": {
+					"expression": "item-comic-image.*data-srcset=\"(.*?) (.*?)(,|\")",
+					"group": 1
+				}
+
+			},
+			{
+				"name": "UClick",
+				"urlFormat": "http://images.ucomics.com/comics/ch/{0:yyyy}/ch{0:yyMMdd}.gif"
+			}
+		]
 	},
 	{
-		"name": "(UComics) Dilbert Classics",
-		"minDate": "2012-06-13",
-		"maxDate": null,
-		"urlFormat": "http://images.ucomics.com/comics/dc/{0:yyyy}/dc{0:yyMMdd}.gif",
+		// i need you to wear this bowler tie. its office policy
+		"name": "Dilbert",
+		"minDate": "1989-04-16",
+		"numPanels": 3,
 		"fileName": "dc{0:yyMMdd}.gif",
-		"numPanels": 3
+		"sources": [
+			{
+				"name": "Dilbert.com",
+				"urlFormat": "https://dilbert.com/strip/{0:yyyy-MM-dd}",
+				"isHtml": "true",
+				"regex": {
+					"expression": "img-comic.*src=\"(.*)\"",
+					"group": 1
+				}
+			}
+		]
 	}
 ]

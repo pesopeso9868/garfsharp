@@ -16,7 +16,7 @@ using System.Text.RegularExpressions;
 using System.Media;
 public class Garfield : Form
 {
-	public class Comic
+	/*public class Comic
 	{
 		public Comic(string name, DateTime minDate, DateTime maxDate, string urlFormat, string fileName, int dayIncrement)
 		{
@@ -101,6 +101,137 @@ public class Garfield : Form
 				return url;
 			}
 		} 
+	}*/
+	public class CurrentComicInfo{
+		public CurrentComicInfo(Comic comic, ComicSource source){
+			this.comic = comic;
+			this.source = source;
+		}
+		public Comic comic;
+		public ComicSource source;
+	}
+	public class WeekInfo{
+		[JsonConstructor]
+		public WeekInfo(int increment, int dayofweek){
+			this.increment = increment;
+			this.dayofweek = dayofweek;
+		}
+		public WeekInfo(){
+			this.increment = 0;
+			this.dayofweek = null;
+		}
+		[DefaultValue(0)]
+		[JsonProperty(DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]
+		public readonly int increment;
+		[DefaultValue(null)]
+		[JsonProperty(DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]
+		public readonly int? dayofweek = null;
+	}
+	public class RegexInfo{ //i feel like a class is a bit overkill but thats fine : )
+		[JsonConstructor]
+		public RegexInfo(string expression, int group){
+			this.expression = expression;
+			this.group = group;
+		}
+		public readonly string expression;
+		[DefaultValue(0)]
+		[JsonProperty(DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]
+		public readonly int group;
+
+		public new string ToString(){
+			return String.Format("{0} {1}", this.expression, this.group);
+		}//this exists solely for debugging reasons
+	}
+	public class ComicSource{
+		[JsonConstructor]
+		public ComicSource(string name, string urlFormat, string? minDate, string? maxDate, bool isHtml, RegexInfo regex){
+			this.name = name;
+			this.urlFormat = urlFormat;
+			if(minDate is string fuck){
+				this.minDate = DateTime.Parse(fuck);
+			}
+			if(maxDate is string fuckdos){
+				this.maxDate = DateTime.Parse(fuckdos);
+			}
+			this.isHtml = isHtml;
+			this.regex = regex;
+		}
+		/*public ComicSource(ComicSource dest, Comic source){ //wish therew as a better way to do this but im sticking with this for now...
+			this.name = dest.name;
+			this.urlFormat = dest.urlFormat;
+			this.minDate = dest.minDate ?? source.minDate;
+			this.maxDate = (dest.maxDate ?? source.maxDate) ?? DateTime.Now;
+			this.isHtml = dest.isHtml;
+			this.regex = dest.regex;
+		}*/
+		public readonly string name;
+		public readonly string urlFormat;
+		public readonly DateTime? minDate;
+		public readonly DateTime? maxDate;
+		[DefaultValue(false)]
+		[JsonProperty(DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]
+		public readonly bool isHtml;
+		public readonly RegexInfo regex;
+		
+		public DateTime getMinDate(Comic comic){
+			return this.minDate ?? comic.minDate;
+		}
+		
+		public DateTime getMaxDate(Comic comic){
+			return (this.maxDate ?? comic.maxDate) ?? DateTime.Now;
+		}
+
+		public async Task<HttpResponseMessage> fetch(string url, HttpClient http, CancellationTokenSource ctk){
+			Uri fuck; //There should be a function on this this code is being used twice
+			bool good = Uri.TryCreate(url, UriKind.Absolute, out fuck);
+			if(good == false){
+				Uri.TryCreate(Path.GetFullPath(url), UriKind.Absolute, out fuck);
+			}
+			HttpResponseMessage response = new HttpResponseMessage();
+			response = await http.GetAsync(fuck, ctk.Token);
+			response.EnsureSuccessStatusCode();
+			return response; //Further processing is done below and below 
+			// if(readAsString){
+
+			// }
+			// else{
+			// 	Stream stream = await response.Content.ReadAsStreamAsync();
+			// }
+		}
+
+		public async Task<string> fetchURL(HttpClient http, CancellationTokenSource ctk, DateTime date){ //For HTML
+			string url = String.Format(this.urlFormat, date);
+			if(this.isHtml){
+				HttpResponseMessage response = await this.fetch(url, http, ctk);
+				string htmldata = await response.Content.ReadAsStringAsync();
+				Match match = Regex.Match(htmldata, this.regex.expression);
+				return match.Groups[this.regex.group].ToString();
+			}
+			else{
+				return url;
+			}
+		} 
+	}
+	public class Comic{
+		[JsonConstructor]
+		public Comic(string name, int numPanels, string minDate, string? maxDate, string fileName, List<ComicSource> sources, WeekInfo? weekinfo){
+			this.name = name;
+			this.numPanels = numPanels;
+			this.minDate = DateTime.Parse(minDate);
+			this.maxDate = DateTime.Parse(maxDate ?? DateTime.Now.ToString());
+			this.fileName = fileName;
+			this.sources = sources;
+			this.weekinfo = weekinfo ?? new WeekInfo();
+		}
+		public readonly string name;
+		[DefaultValue(3)]
+		[JsonProperty(DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]
+		public readonly int numPanels;
+		public readonly DateTime minDate;
+		public readonly DateTime? maxDate;
+		public readonly string fileName;
+		public readonly List<ComicSource> sources;
+		public readonly WeekInfo weekinfo;
 	}
 	public class Gimmick
 	{
@@ -114,7 +245,7 @@ public class Garfield : Form
 			this.contentlabel = label;
 			this.enabled = false;
 		}
-		public Gimmick(string name, Func<Bitmap, Image, Comic, Bitmap> callback){
+		public Gimmick(string name, Func<Bitmap, Image, CurrentComicInfo, Bitmap> callback){
 			this.name = name;
 			this.contentlabel = "&" + name;
 			this.doIt = callback;
@@ -123,16 +254,16 @@ public class Garfield : Form
 		public readonly string name; //{ get; set; }
 		public readonly string contentlabel; //{ get; set; }
 		public bool enabled { get; set; }
-		public Func<Bitmap, Image, Comic, Bitmap> doIt { get; set; }
+		public Func<Bitmap, Image, CurrentComicInfo, Bitmap> doIt { get; set; }
 	}
 	public class PanelReplace : Gimmick
 	{
 		public PanelReplace(string name, string replacePath) : base(name){
-			this.doIt = delegate(Bitmap bm, Image img, Comic comic){
+			this.doIt = delegate(Bitmap bm, Image img, CurrentComicInfo curcomic){
 				string path = replacePath; //I don't want to pack it as a resource so its in a folder
 				if(File.Exists(path)){
 					using(Bitmap pipeunscale = new Bitmap(path)){
-						int width = img.Width/(comic.numPanels);
+						int width = img.Width/(curcomic.comic.numPanels);
 						if(img.Width <= 800){
 							width = img.Width/2; // Two panel must be enabled
 						}
@@ -156,8 +287,8 @@ public class Garfield : Form
 			Gimmick pipe = new PanelReplace("Pipe", "./resource/pipe.png");
 			Gimmick deflated = new PanelReplace("Deflated", "./resource/deflated.png");			
 			Gimmick window = new PanelReplace("Window", "./resource/window.png");
-			Gimmick twopanel = new Gimmick("Two panels", delegate(Bitmap bm, Image img, Comic comic){
-				float width = (float)img.Width*(2.0f/comic.numPanels); // JUST USE DECIMALS ALREADY!!! STOP DOING THE FUCKING THING IN INTEGERS
+			Gimmick twopanel = new Gimmick("Two panels", delegate(Bitmap bm, Image img, CurrentComicInfo curcomic){
+				float width = (float)img.Width*(2.0f/curcomic.comic.numPanels); // JUST USE DECIMALS ALREADY!!! STOP DOING THE FUCKING THING IN INTEGERS
 				bm = new Bitmap((int)width, img.Height);
 				using(Graphics g = Graphics.FromImage(bm)){
 					g.DrawImage(img, 0, 0, new RectangleF(new Point(0, 0), bm.Size), GraphicsUnit.Pixel);
@@ -191,7 +322,7 @@ public class Garfield : Form
 	public ToolStripProgressBar statusprogress;
 	public MenuStrip menu;
 	public List<Comic> comics;
-	public Comic currentcomic;
+	public CurrentComicInfo currentcomic;
 	public Gimmicks gimmicks;
 	public string[] taglines = new string[] {
 		"now with 15% more C#!",
@@ -240,20 +371,42 @@ public class Garfield : Form
 		{
 			MessageBox.Show(String.Format("Your strips.json is wrong.\n\n{0}\n\n...but I'll let you pass this time.", suck.ToString()), "UH OH IO!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			comics = JsonConvert.DeserializeObject<List<Comic>>(@"[
-			{
-				'name': 'Garfield',
-				'minDate': '1978-06-19',
-				'maxDate': '2020-07-22',
-				'urlFormat': 'https://d1ejxu6vysztl5.cloudfront.net/comics/garfield/{0:yyyy}/{0:yyyy-MM-dd}.gif',
-				'fileName': '{0:yyyy-MM-dd}.gif'
-			},
-			{
-				'name': 'U.S. Acres',
-				'minDate': '1986-03-03',
-				'maxDate': '1989-05-07',
-				'urlFormat': 'https://d1ejxu6vysztl5.cloudfront.net/comics/usacres/{0:yyyy}/usa{0:yyyy-MM-dd}.gif',
-				'fileName': 'usa{0:yyyy-MM-dd}.gif'
-			}
+				{
+					'name': 'Garfield',
+					'numPanels': 3,
+					'minDate': '1978-06-19',
+					'fileName': '{0:yyyy-MM-dd}.gif',
+					'sources': [
+						// These are ComicSources. It contains information of the name of the source, the URL format, whether or not it's an HTML and regex for the data.
+						// maxDate and minDate will override the top-layer date settings
+						{
+							'name': 'the-eye',
+							'urlFormat': 'https://the-eye.eu/public/Comics/Garfield/{0:yyyy-MM-dd}.gif',
+							'maxDate': '2020-07-21'
+						},
+						{
+							'name': 'GoComics',
+							'urlFormat': 'https://www.gocomics.com/garfield/{0:yyyy}/{0:MM}/{0:dd}',
+							'isHtml': true,
+							// This is a RegexInfo. It simply contains the expression and group to tell the program how to pull the comic image URL from the HTML data.
+							'regex': {
+								'expression': 'item-comic-image.*data-srcset=\""(.*?) (.*?)(,|\\"")',
+								'group': 1
+							}
+						},
+						{
+							'name': 'Uclick',
+							'minDate': '1978-06-19',
+							'urlFormat': 'http://images.ucomics.com/comics/ga/{0:yyyy}/ga{0:yyMMdd}.gif'
+						},
+						{
+							'name': 'archive.org',
+							'urlFormat': 'https://web.archive.org/web/2019id_/https://d1ejxu6vysztl5.cloudfront.net/comics/garfield/{0:yyyy}/{0:yyyy-MM-dd}.gif',
+							'maxDate': '2020-07-21'
+						}
+						
+					]
+				}
 			]");
 		}
 		file = new ToolStripMenuItem("&File");
@@ -273,7 +426,7 @@ public class Garfield : Form
 		previousstrip = new ToolStripMenuItem("&Previous strip", null, new EventHandler(strip_previous));
 		gorando = new ToolStripMenuItem("&Go rando", null, new EventHandler(strip_rando));
 		exit = new ToolStripMenuItem("E&xit", null, new EventHandler(delegate (object sender, EventArgs e) { this.Close(); }), (Keys.Alt | Keys.F4));
-		currentcomic = comics[0];
+		currentcomic = new CurrentComicInfo(comics[0], comics[0].sources[0]);
 		this.AutoSize = true;
 		this.MinimumSize = new Size(661, 480);
 		this.Text = @"Garfield strip picker - " + taglines[new Random().Next(0, taglines.Length)];
@@ -321,8 +474,8 @@ public class Garfield : Form
 		previous.Anchor = AnchorStyles.Left;
 		picker.Controls.Add(previous);
 		date = new DateTimePicker();
-		date.MinDate = currentcomic.minDate;
-		date.MaxDate = currentcomic.maxDate;
+		date.MinDate = currentcomic.source.getMinDate(currentcomic.comic);
+		date.MaxDate = currentcomic.source.getMaxDate(currentcomic.comic);
 		date.CustomFormat = "yyyy-MM-dd";
 		date.Format = DateTimePickerFormat.Custom;
 		date.Dock = DockStyle.Fill;
@@ -342,7 +495,7 @@ public class Garfield : Form
 		strip.MinimumSize = new Size(640, 0);
 		panel.Controls.Add(strip);
 		status = new StatusStrip();
-		statuscomic = new ToolStripStatusLabel(currentcomic.name);
+		statuscomic = new ToolStripStatusLabel(String.Format("({0}) {1}", currentcomic.source.name, currentcomic.comic.name));
 		statusdate = new ToolStripStatusLabel();
 		statusprogress = new ToolStripProgressBar();
 		statusprogress.Alignment = ToolStripItemAlignment.Right;
@@ -376,12 +529,17 @@ public class Garfield : Form
 			gimmick.DropDownItems.Clear();
 			gimmick.DropDownItems.AddRange(gimmickMenus.ToArray()); 
 		});
-		for (int i = 0; i < comics.Count; i++)
+		for (int x = 0; x < comics.Count; x++)
 		{
 			// im so fucked up
-			Comic item = comics[i];
-			ToolStripMenuItem fuck = new ToolStripMenuItem(item.name, null, new EventHandler((sender, e) => comic_update(sender, e)));
-			fuck.Tag = item;
+			Comic item = comics[x];
+			ToolStripMenuItem fuck = new ToolStripMenuItem(item.name, null);//, new EventHandler((sender, e) => comic_update(sender, e)));
+			for (int y = 0; y < item.sources.Count; y++){
+				ComicSource source = item.sources[y];
+				ToolStripMenuItem sourcemenu = new ToolStripMenuItem(source.name, null);
+				sourcemenu.Click += (sender, e) => comic_update(sender, e, item, source);
+				fuck.DropDownItems.Add(sourcemenu);
+			}
 			change.DropDownItems.Add(fuck);
 		}
 		menu.Items.AddRange(new ToolStripItem[]{
@@ -397,7 +555,7 @@ public class Garfield : Form
 	{
 		try
 		{
-			date.Value = date.Value.AddDays(-currentcomic.dayIncrement);
+			date.Value = date.Value.AddDays(-currentcomic.comic.weekinfo.increment);
 		}
 		catch (ArgumentOutOfRangeException suck)
 		{
@@ -409,7 +567,7 @@ public class Garfield : Form
 	{
 		try
 		{
-			date.Value = date.Value.AddDays(currentcomic.dayIncrement);
+			date.Value = date.Value.AddDays(currentcomic.comic.weekinfo.increment);
 		}
 		catch (ArgumentOutOfRangeException suck)
 		{
@@ -426,9 +584,11 @@ public class Garfield : Form
 	{
 		try
 		{
-			int r = (currentcomic.maxDate - currentcomic.minDate).Days;
-			DateTime rd = currentcomic.minDate.AddDays(new Random().Next(r));
-			if(currentcomic.weekday is int butt){
+			ComicSource comsrc = currentcomic.source;
+			Comic com = currentcomic.comic;
+			int r = (comsrc.getMaxDate(com) - comsrc.getMinDate(com)).Days;
+			DateTime rd = comsrc.getMinDate(com).AddDays(new Random().Next(r));
+			if(currentcomic.comic.weekinfo.dayofweek is int butt){
 				date.Value = rd.AddDays(7-((int)rd.DayOfWeek-butt%7));
 			}
 			else{
@@ -450,7 +610,7 @@ public class Garfield : Form
 		savefile.DefaultExt = "gif";
 		savefile.Filter = "GIF files (*.gif)|*.gif|All files (*.*)|*.*";
 		savefile.Title = "Save comic strip";
-		savefile.FileName = String.Format(currentcomic.fileName, date.Value);
+		savefile.FileName = String.Format(currentcomic.comic.fileName, date.Value);
 		if (savefile.ShowDialog(this) == DialogResult.OK)
 		{
 			System.IO.FileStream fs = (System.IO.FileStream)savefile.OpenFile();
@@ -465,7 +625,7 @@ public class Garfield : Form
 
 	private async void strip_copyURL(object sender, EventArgs e)
 	{
-		Clipboard.SetData(DataFormats.Text, (Object)await currentcomic.fetchURL(stripretriever, ctk, date.Value));//(Object)String.Format(currentcomic.urlFormat, date.Value));
+		Clipboard.SetData(DataFormats.Text, (Object)await currentcomic.source.fetchURL(stripretriever, ctk, date.Value));//(Object)String.Format(currentcomic.urlFormat, date.Value));
 	}
 
 	private Image drawMessage(string message, int size = 96)
@@ -483,7 +643,7 @@ public class Garfield : Form
 	private async void strip_update(object sender, EventArgs e)
 	{
 		statusprogress.Visible = true;
-		string penis = await currentcomic.fetchURL(stripretriever, ctk, date.Value); //String.Format(currentcomic.urlFormat, date.Value)
+		string penis = await currentcomic.source.fetchURL(stripretriever, ctk, date.Value); //String.Format(currentcomic.urlFormat, date.Value)
 		Uri fuck;
 		bool good = Uri.TryCreate(penis, UriKind.Absolute, out fuck);
 		if(!good){
@@ -517,7 +677,7 @@ public class Garfield : Form
 			{
 				//Stream stream = stripretriever.OpenRead(String.Format(currentcomic.urlFormat, date.Value));
 				//ctk.Cancel();
-				response = await currentcomic.fetch(penis, stripretriever, ctk);
+				response = await currentcomic.source.fetch(penis, stripretriever, ctk);
 				// response = await stripretriever.GetAsync(fuck, ctk.Token);
 				response.EnsureSuccessStatusCode();
 				Stream stream = await response.Content.ReadAsStreamAsync();
@@ -533,37 +693,34 @@ public class Garfield : Form
 				img = drawMessage("an error occured while\nprocessing the image", 36);
 			}
 		}
-		Bitmap bm = new Bitmap(img.Width, img.Height);
-		using(bm){
-			bm = this.shittyCopy(img);
-			foreach(Gimmick gimmick in gimmicks.gimmicks){
-				if(gimmick.enabled){
-					img = gimmick.doIt(bm, img, currentcomic);
-					bm = this.shittyCopy(img);
-					// THis is prone to exceptions and im not doing anything abouti t
-				}
+		Bitmap bm = this.shittyCopy(img); // wish i could be using "using" here
+		foreach(Gimmick gimmick in gimmicks.gimmicks){
+			if(gimmick.enabled){
+				img = gimmick.doIt(bm, img, currentcomic);
+				bm = this.shittyCopy(img);
+				// just found out Bitmap extends Image. what a waste
+				// THis is prone to exceptions and im not doing anything abouti t
 			}
 		}
+		bm.Dispose();
 		strip.Image = img;
 		statusprogress.Visible = false;
 		statusdate.Text = date.Value.ToString("d");
 	}
 
-	private void comic_update(object sender, EventArgs e)
+	private void comic_update(object sender, EventArgs e, Comic comic, ComicSource source)
 	{
-		ToolStripMenuItem _where = sender as ToolStripMenuItem;
-		if(_where == null) return;
-		currentcomic = _where.Tag as Comic;
+		currentcomic = new CurrentComicInfo(comic, source);
 		date.ResetBindings();
 		date.Checked = true;
 		//i keep getting argumentoutofrangeexceptions. lets try this
 		date.MaxDate = DateTimePicker.MaximumDateTime;
 		date.MinDate = DateTimePicker.MinimumDateTime;
 		//reset mindate and maxdate values then set it again
-		date.MaxDate = currentcomic.maxDate;
-		date.MinDate = currentcomic.minDate;
+		date.MaxDate = source.getMaxDate(comic);
+		date.MinDate = source.getMinDate(comic);
 		date.Value = date.Value;
-		statuscomic.Text = currentcomic.name;
+		statuscomic.Text = String.Format("({0}) {1}", currentcomic.source.name, currentcomic.comic.name);
 		strip_update(null, null);
 	}
 
