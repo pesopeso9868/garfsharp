@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Media;
 public class Garfield : Form
 {
 	public class Comic
@@ -26,7 +27,7 @@ public class Garfield : Form
 			this.fileName = fileName;
 		}
 		[JsonConstructor]
-		public Comic(string name, string minDate, string maxDate, string urlFormat, string fileName, int dayIncrement, int? weekday, bool isHtml, string realUrlRegex, int realMatchGroup)
+		public Comic(string name, string minDate, string maxDate, string urlFormat, string fileName, int dayIncrement, int? weekday, bool isHtml, string realUrlRegex, int realMatchGroup, int numPanels)
 		{
 			this.name = name;
 			this.minDate = DateTime.Parse(minDate);
@@ -38,32 +39,37 @@ public class Garfield : Form
 			this.isHtml = isHtml;
 			this.realUrlRegex = realUrlRegex;
 			this.realMatchGroup = realMatchGroup;
+			this.numPanels = numPanels;
 		}
-		public string name { get; set; }
-		public DateTime minDate { get; set; }
-		public DateTime maxDate { get; set; }
-		public string urlFormat { get; set; }
-		public string fileName { get; set; }
+		public readonly string name; //{ get; set; }
+		public readonly DateTime minDate; //{ get; set; }
+		public readonly DateTime maxDate; //{ get; set; }
+		public readonly string urlFormat; //{ get; set; }
+		public readonly string fileName; //{ get; set; }
 
 		[DefaultValue(false)]
 		[JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
-		public bool isHtml { get; set; }
+		public readonly bool isHtml; //{ get; set; }
 
 		[DefaultValue(1)]
 		[JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
-		public int dayIncrement { get; set; }
+		public readonly int dayIncrement; //{ get; set; }
 
 		[DefaultValue(null)]
 		[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
-		public int? weekday { get; set; }
+		public readonly int? weekday; //{ get; set; }
 
 		[DefaultValue("")]
 		[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
-		public string realUrlRegex { get; set; }
+		public readonly string realUrlRegex; //{ get; set; }
 
 		[DefaultValue(0)]
 		[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
-		public int realMatchGroup { get; set; }
+		public readonly int realMatchGroup; //{ get; set; }
+		
+		[DefaultValue(3)]
+		[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+		public readonly int numPanels; //{get; set;}
 
 		public async Task<HttpResponseMessage> fetch(string url, HttpClient http, CancellationTokenSource ctk){
 			Uri fuck; //There should be a function on this this code is being used twice
@@ -108,74 +114,58 @@ public class Garfield : Form
 			this.contentlabel = label;
 			this.enabled = false;
 		}
-		public string name { get; set; }
-		public string contentlabel { get; set; }
+		public Gimmick(string name, Func<Bitmap, Image, Comic, Bitmap> callback){
+			this.name = name;
+			this.contentlabel = "&" + name;
+			this.doIt = callback;
+			this.enabled = false;
+		}
+		public readonly string name; //{ get; set; }
+		public readonly string contentlabel; //{ get; set; }
 		public bool enabled { get; set; }
-		public Func<Bitmap, Image, Bitmap> doIt { get; set; }
+		public Func<Bitmap, Image, Comic, Bitmap> doIt { get; set; }
+	}
+	public class PanelReplace : Gimmick
+	{
+		public PanelReplace(string name, string replacePath) : base(name){
+			this.doIt = delegate(Bitmap bm, Image img, Comic comic){
+				string path = replacePath; //I don't want to pack it as a resource so its in a folder
+				if(File.Exists(path)){
+					using(Bitmap pipeunscale = new Bitmap(path)){
+						int width = img.Width/(comic.numPanels);
+						if(img.Width <= 800){
+							width = img.Width/2; // Two panel must be enabled
+						}
+						//img.Width>=1195&&img.Width<=1205?pipeunscale.Width:(int)(img.Width/3);
+						Bitmap pipebm = new Bitmap(pipeunscale, new Size(width, img.Height));
+						using(Graphics g = Graphics.FromImage(bm)){
+							g.DrawImage(bm, 0, 0, new RectangleF(new Point(0, 0), new Size(bm.Width,bm.Height)), GraphicsUnit.Pixel);
+							g.DrawImage(pipebm, bm.Width-pipebm.Width, 0, new RectangleF(new Point(0, 0), new Size(pipebm.Width,pipebm.Height)), GraphicsUnit.Pixel);
+						};
+						pipebm.Dispose();
+					}
+				}
+				return bm;
+			}; 
+		}
 	}
 	public class Gimmicks
 	{
 		public Gimmicks()
 		{
-			Gimmick pipe = new Gimmick("Pipe");
-			Gimmick deflated = new Gimmick("Deflated");
-			Gimmick window = new Gimmick("Window");
-			Gimmick twopanel = new Gimmick("Two panels");
-			pipe.doIt = delegate(Bitmap bm, Image img){
-				string path = "./resource/pipe.png"; //I don't want to pack it as a resource so its in a folder
-				if(File.Exists(path)){
-					using(Bitmap pipeunscale = new Bitmap(path)){
-						int width = img.Width>=1195&&img.Width<=1205?pipeunscale.Width:(int)(img.Width/3);
-						Bitmap pipebm = new Bitmap(pipeunscale, new Size(width, img.Height));
-						using(Graphics g = Graphics.FromImage(bm)){
-							g.DrawImage(bm, 0, 0, new RectangleF(new Point(0, 0), new Size(bm.Width,bm.Height)), GraphicsUnit.Pixel);
-							g.DrawImage(pipebm, bm.Width-pipebm.Width, 0, new RectangleF(new Point(0, 0), new Size(pipebm.Width,pipebm.Height)), GraphicsUnit.Pixel);
-						};
-						pipebm.Dispose();
-					}
-				}
-				return bm;
-			};
-			deflated.doIt = delegate(Bitmap bm, Image img){
-				string path = "./resource/deflated.png"; //I don't want to pack it as a resource so its in a folder
-				if(File.Exists(path)){
-					using(Bitmap pipeunscale = new Bitmap(path)){
-						int width = img.Width>=1195&&img.Width<=1205?pipeunscale.Width:(int)(img.Width/3);
-						Bitmap pipebm = new Bitmap(pipeunscale, new Size(width, img.Height));
-						using(Graphics g = Graphics.FromImage(bm)){
-							g.DrawImage(bm, 0, 0, new RectangleF(new Point(0, 0), new Size(bm.Width,bm.Height)), GraphicsUnit.Pixel);
-							g.DrawImage(pipebm, bm.Width-pipebm.Width, 0, new RectangleF(new Point(0, 0), new Size(pipebm.Width,pipebm.Height)), GraphicsUnit.Pixel);
-						};
-						pipebm.Dispose();
-					}
-				}
-				return bm;
-			};
-			window.doIt = delegate(Bitmap bm, Image img){
-				string path = "./resource/window.png"; //I don't want to pack it as a resource so its in a folder
-				if(File.Exists(path)){
-					using(Bitmap pipeunscale = new Bitmap(path)){
-						int width = img.Width>=1195&&img.Width<=1205?407:(int)(img.Width/3);
-						Bitmap pipebm = new Bitmap(pipeunscale, new Size(width, img.Height));
-						using(Graphics g = Graphics.FromImage(bm)){
-							g.DrawImage(bm, 0, 0, new RectangleF(new Point(0, 0), new Size(bm.Width,bm.Height)), GraphicsUnit.Pixel);
-							g.DrawImage(pipebm, bm.Width-pipebm.Width, 0, new RectangleF(new Point(0, 0), new Size(pipebm.Width,pipebm.Height)), GraphicsUnit.Pixel);
-						};
-						pipebm.Dispose();
-					}
-				}
-				return bm;
-			};
-			twopanel.doIt = delegate(Bitmap bm, Image img){
-				int width = (int)(img.Width/1.5);
-				bm = new Bitmap(width, img.Height);
+			Gimmick pipe = new PanelReplace("Pipe", "./resource/pipe.png");
+			Gimmick deflated = new PanelReplace("Deflated", "./resource/deflated.png");			
+			Gimmick window = new PanelReplace("Window", "./resource/window.png");
+			Gimmick twopanel = new Gimmick("Two panels", delegate(Bitmap bm, Image img, Comic comic){
+				float width = (float)img.Width*(2.0f/comic.numPanels); // JUST USE DECIMALS ALREADY!!! STOP DOING THE FUCKING THING IN INTEGERS
+				bm = new Bitmap((int)width, img.Height);
 				using(Graphics g = Graphics.FromImage(bm)){
-					g.DrawImage(img, 0, 0, new RectangleF(new Point(0, 0), new Size(width,img.Height)), GraphicsUnit.Pixel);
+					g.DrawImage(img, 0, 0, new RectangleF(new Point(0, 0), bm.Size), GraphicsUnit.Pixel);
 				};
 				return bm;
-			}; 
+			}); 
 			// Need a better way to do this.... it's just the same function but with different paths
-			this.gimmicks = new List<Gimmick> {pipe, deflated, window, twopanel};
+			this.gimmicks = new List<Gimmick> {twopanel, pipe, deflated, window};
 		}
 		public bool AtLeastOne(){
 			foreach(Gimmick gimmick in this.gimmicks){
@@ -411,7 +401,8 @@ public class Garfield : Form
 		}
 		catch (ArgumentOutOfRangeException suck)
 		{
-			//we dun care if argumentoutofrangeexception
+			//let user know we are reaching oob
+			SystemSounds.Beep.Play();
 		}
 	}
 	private void strip_next(object sender, EventArgs e)
@@ -422,7 +413,8 @@ public class Garfield : Form
 		}
 		catch (ArgumentOutOfRangeException suck)
 		{
-			//we dun care if argumentoutofrangeexception
+			//let user know we are reaching oob
+			SystemSounds.Beep.Play();
 		}
 	}
 
@@ -445,6 +437,8 @@ public class Garfield : Form
 		}
 		catch (ArgumentOutOfRangeException suck)
 		{
+			//Out of range? reroll again
+			strip_rando(sender, e);
 			//we dun care if argumentoutofrangeexception
 		}
 	}
@@ -475,7 +469,7 @@ public class Garfield : Form
 	}
 
 	private Image drawMessage(string message, int size = 96)
-    {
+	{
 		Image img = new Bitmap(1200, 350);
 		Graphics graph = Graphics.FromImage(img);
 		graph.Clear(Color.Gray);
@@ -492,7 +486,7 @@ public class Garfield : Form
 		string penis = await currentcomic.fetchURL(stripretriever, ctk, date.Value); //String.Format(currentcomic.urlFormat, date.Value)
 		Uri fuck;
 		bool good = Uri.TryCreate(penis, UriKind.Absolute, out fuck);
-		if(good == false){
+		if(!good){
 			Uri.TryCreate(Path.GetFullPath(penis), UriKind.Absolute, out fuck);
 		}
 		//why in the world does absoluteuri return a string and not an uri
@@ -544,7 +538,8 @@ public class Garfield : Form
 			bm = this.shittyCopy(img);
 			foreach(Gimmick gimmick in gimmicks.gimmicks){
 				if(gimmick.enabled){
-					img = gimmick.doIt(bm, img);
+					img = gimmick.doIt(bm, img, currentcomic);
+					bm = this.shittyCopy(img);
 					// THis is prone to exceptions and im not doing anything abouti t
 				}
 			}

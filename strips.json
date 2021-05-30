@@ -6,7 +6,8 @@
 		"urlFormat": "https://the-eye.eu/public/Comics/Garfield/{0:yyyy-MM-dd}.gif",
 		//"urlFormat": "https://d1ejxu6vysztl5.cloudfront.net/comics/garfield/{0:yyyy}/.gif",
 		//i hate you, nick
-		"fileName": "{0:yyyy-MM-dd}.gif"
+		"fileName": "{0:yyyy-MM-dd}.gif",
+		"numPanels": 3
 	},
 	{
 		"name": "(archive.org) U.S. Acres",
@@ -14,7 +15,8 @@
 		"maxDate": "1989-05-07",
 		"urlFormat": "https://web.archive.org/web/2019id_/https://d1ejxu6vysztl5.cloudfront.net/comics/usacres/{0:yyyy}/usa{0:yyyy-MM-dd}.gif",
 		//"urlFormat": "https://d1ejxu6vysztl5.cloudfront.net/comics/usacres/{0:yyyy}/usa{0:yyyy-MM-dd}.gif",
-		"fileName": "usa{0:yyyy-MM-dd}.gif"
+		"fileName": "usa{0:yyyy-MM-dd}.gif",
+		"numPanels": 3
 	},
 	{
 		"name": "(archive.org) Garfield",
@@ -22,7 +24,8 @@
 		"maxDate": "2020-07-22",
 		"urlFormat": "https://web.archive.org/web/2019id_/https://d1ejxu6vysztl5.cloudfront.net/comics/garfield/{0:yyyy}/{0:yyyy-MM-dd}.gif",
 		//"urlFormat": "https://d1ejxu6vysztl5.cloudfront.net/comics/usacres/{0:yyyy}/usa{0:yyyy-MM-dd}.gif",
-		"fileName": "usa{0:yyyy-MM-dd}.gif"
+		"fileName": "usa{0:yyyy-MM-dd}.gif",
+		"numPanels": 3
 	},
 	{
 		"name": "(local) U.S. Acres",
@@ -30,7 +33,8 @@
 		"maxDate": "1989-05-07",
 		"urlFormat": "usacres\\usa{0:yyyy-MM-dd}.gif",
 		//"urlFormat": "https://d1ejxu6vysztl5.cloudfront.net/comics/usacres/{0:yyyy}/usa{0:yyyy-MM-dd}.gif",
-		"fileName": "usa{0:yyyy-MM-dd}.gif"
+		"fileName": "usa{0:yyyy-MM-dd}.gif",
+		"numPanels": 3
 	},
 	{
 		"name": "(local) Gnorm Gnat",
@@ -40,14 +44,16 @@
 		//"urlFormat": "https://d1ejxu6vysztl5.cloudfront.net/comics/usacres/{0:yyyy}/usa{0:yyyy-MM-dd}.gif",
 		"fileName": "{0:yyyy-MM-dd}.png",
 		"dayIncrement": 7,
-		"weekday": 4
+		"weekday": 4,
+		"numPanels": 3
 	},
 	{
 		"name": "(UComics) Garfield",
 		"minDate": "1978-06-19",
 		"maxDate": null,
 		"urlFormat": "http://images.ucomics.com/comics/ga/{0:yyyy}/ga{0:yyMMdd}.gif",
-		"fileName": "ga{0:yyMMdd}.gif"
+		"fileName": "ga{0:yyMMdd}.gif",
+		"numPanels": 3
 	},
 	{
 		"name": "(GoComics) Garfield",
@@ -57,7 +63,8 @@
 		"isHtml": true,
 		"fileName": "ga{0:yyMMdd}.gif",
 		"realUrlRegex": "item-comic-image.*data-srcset=\"(.*?) (.*?)(,|\")",
-		"realMatchGroup": 1
+		"realMatchGroup": 1,
+		"numPanels": 3
 	},
 	{
 		"name": "(UComics) Calvin and Hobbes",
@@ -65,19 +72,22 @@
 		"maxDate": null,
 		"urlFormat": "http://images.ucomics.com/comics/ch/{0:yyyy}/ch{0:yyMMdd}.gif",
 		"fileName": "ch{0:yyMMdd}.gif",
+		"numPanels": 4
 	},
 	{
 		"name": "(UComics) Peanuts",
 		"minDate": "1950-10-02",
 		"maxDate": null,
 		"urlFormat": "http://images.ucomics.com/comics/pe/{0:yyyy}/pe{0:yyMMdd}.gif",
-		"fileName": "pe{0:yyMMdd}.gif"
+		"fileName": "pe{0:yyMMdd}.gif",
+		"numPanels": 4
 	},
 	{
 		"name": "(UComics) Dilbert Classics",
 		"minDate": "2012-06-13",
 		"maxDate": null,
 		"urlFormat": "http://images.ucomics.com/comics/dc/{0:yyyy}/dc{0:yyMMdd}.gif",
-		"fileName": "dc{0:yyMMdd}.gif"
+		"fileName": "dc{0:yyMMdd}.gif",
+		"numPanels": 3
 	}
 ]
