@@ -2,8 +2,12 @@ name: Compile
 on:
   push:
     branches: [ master ]
+    paths:
+      - "garfield.cs"
   pull_request:
     branches: [ master ]
+    paths:
+      - "garfield.cs"
 jobs:
   build:
     runs-on: windows-latest
