@@ -129,10 +129,27 @@
 			{
 				"name": "Dilbert.com",
 				"urlFormat": "https://dilbert.com/strip/{0:yyyy-MM-dd}",
-				"isHtml": "true",
+				"isHtml": true,
 				"regex": {
 					"expression": "img-comic.*src=\"(.*)\"",
 					"group": 1
+				}
+			}
+		]
+	},
+	{
+		"name": "Heathcliff",
+		"minDate": "2002-01-01",
+		"numPanels": 1,
+		"fileName": "hc{0:yyMMdd}.gif",
+		"sources": [
+			{
+				"name": "GoComics",
+				"urlFormat": "https://www.gocomics.com/heathcliff/{0:yyyy}/{0:MM}/{0:dd}",
+				"isHtml": true,
+				"regex": {
+					"expression": "item-comic-image.*data-srcset=\"(.*?) (.*?)(,|\")",
+                                        "group": 1
 				}
 			}
 		]

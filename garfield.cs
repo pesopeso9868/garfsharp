@@ -608,13 +608,30 @@ public class Garfield : Form
 		SaveFileDialog savefile = new SaveFileDialog();
 		savefile.InitialDirectory = @"C:\";
 		savefile.DefaultExt = "gif";
-		savefile.Filter = "GIF files (*.gif)|*.gif|All files (*.*)|*.*";
+		savefile.Filter = "GIF files (*.gif)|*.gif|PNG files (*.png)|*.png|JPEG files (*.jpg, *.jpeg)|*.jpg;*.jpeg|All files (*.*)|*.*";
 		savefile.Title = "Save comic strip";
 		savefile.FileName = String.Format(currentcomic.comic.fileName, date.Value);
 		if (savefile.ShowDialog(this) == DialogResult.OK)
 		{
+			var extension = System.IO.Path.GetExtension(savefile.FileName);
+			var format = System.Drawing.Imaging.ImageFormat.Gif;
+			switch(extension.ToLower()){
+				case ".bmp":
+					format = System.Drawing.Imaging.ImageFormat.Bmp;
+					break;
+				case ".png":
+					format = System.Drawing.Imaging.ImageFormat.Png;
+					break;
+				case ".jpeg":
+				case ".jpg":
+					format = System.Drawing.Imaging.ImageFormat.Jpeg;
+					break;
+				default:
+					break;
+
+			}
 			System.IO.FileStream fs = (System.IO.FileStream)savefile.OpenFile();
-			strip.Image.Save(fs, System.Drawing.Imaging.ImageFormat.Gif);
+			strip.Image.Save(fs, format);
 		}
 	}
 
