@@ -18,3 +18,5 @@ jobs:
           path: |
             Garfield.exe
             Garfield.pdb
+            strips.json
+            resource/*
