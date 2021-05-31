@@ -117,10 +117,10 @@ public class Garfield : Form
 			this.dayofweek = dayofweek;
 		}
 		public WeekInfo(){
-			this.increment = 0;
+			this.increment = 1;
 			this.dayofweek = null;
 		}
-		[DefaultValue(0)]
+		[DefaultValue(1)]
 		[JsonProperty(DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]
 		public readonly int increment;
 		[DefaultValue(null)]
