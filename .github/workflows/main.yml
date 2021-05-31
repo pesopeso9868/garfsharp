@@ -20,3 +20,4 @@ jobs:
             Garfield.pdb
             strips.json
             resource/*
+            *.dll
